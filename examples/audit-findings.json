@@ -1,0 +1,244 @@
+{
+  "tool": "next-fastify-audit-skill scanner",
+  "version": "1.0.0",
+  "target": "fixture",
+  "scannedFiles": 7,
+  "summary": {
+    "high": 8,
+    "medium": 12,
+    "low": 3
+  },
+  "total": 23,
+  "findings": [
+    {
+      "id": "LLM-001",
+      "severity": "high",
+      "dimension": "llm-integration",
+      "title": "LLM endpoint with no visible rate limiting",
+      "file": "app/api/chat/route.ts",
+      "line": 5,
+      "evidence": "import { askQuestion } from '../../../lib/llm';",
+      "fix": "Rate-limit every LLM endpoint (per user and per IP) and cap tokens per request. With Fastify: await fastify.register(import(\"@fastify/rate-limit\"), { max: 20, timeWindow: \"1 minute\" }); with Next.js: add a rate-limit check in middleware or in the handler before calling the model."
+    },
+    {
+      "id": "SEC-002",
+      "severity": "high",
+      "dimension": "security",
+      "title": "dangerouslySetInnerHTML with untrusted input",
+      "file": "app/page.tsx",
+      "line": 13,
+      "evidence": "dangerouslySetInnerHTML={{ __html: data.html }}",
+      "fix": "Avoid dangerouslySetInnerHTML. Render the content as React children, or sanitise it first with a library such as DOMPurify and only then inject it."
+    },
+    {
+      "id": "SEC-004",
+      "severity": "high",
+      "dimension": "security",
+      "title": "SQL built by string concatenation or template interpolation",
+      "file": "lib/db.ts",
+      "line": 5,
+      "evidence": "SELECT * FROM users WHERE email = '\" +",
+      "fix": "Use parameterised queries (placeholders) instead of building SQL from strings. Example: db.query(\"SELECT * FROM users WHERE id = $1\", [userId])"
+    },
+    {
+      "id": "SEC-005",
+      "severity": "high",
+      "dimension": "security",
+      "title": "Sensitive data written to console logs",
+      "file": "lib/db.ts",
+      "line": 10,
+      "evidence": "console.log('Login attempt for', email, 'with password', password)",
+      "fix": "Remove the log line, or log only a redacted value (e.g. the last 4 characters of a token). Logs are often shipped to third-party services."
+    },
+    {
+      "id": "SEC-001",
+      "severity": "high",
+      "dimension": "security",
+      "title": "Hardcoded secret or API key",
+      "file": "lib/llm.ts",
+      "line": 8,
+      "evidence": "apiKey = 'sk-live-9f2c41d7a8b34e6f9021c55d'",
+      "fix": "Move the value into an environment variable and read it with process.env. Never commit real credentials. Example: const apiKey = process.env.OPENAI_API_KEY; if (!apiKey) throw new Error(\"OPENAI_API_KEY is not set\");"
+    },
+    {
+      "id": "SEC-005",
+      "severity": "high",
+      "dimension": "security",
+      "title": "Sensitive data written to console logs",
+      "file": "lib/llm.ts",
+      "line": 10,
+      "evidence": "console.log('Starting LLM client with key', apiKey)",
+      "fix": "Remove the log line, or log only a redacted value (e.g. the last 4 characters of a token). Logs are often shipped to third-party services."
+    },
+    {
+      "id": "SEC-004",
+      "severity": "high",
+      "dimension": "security",
+      "title": "SQL built by string concatenation or template interpolation",
+      "file": "server.js",
+      "line": 19,
+      "evidence": "SELECT * FROM users WHERE id = ' +",
+      "fix": "Use parameterised queries (placeholders) instead of building SQL from strings. Example: db.query(\"SELECT * FROM users WHERE id = $1\", [userId])"
+    },
+    {
+      "id": "SEC-003",
+      "severity": "high",
+      "dimension": "security",
+      "title": "eval() or new Function() with dynamic code",
+      "file": "server.js",
+      "line": 35,
+      "evidence": "eval(",
+      "fix": "Remove eval / new Function. Use JSON.parse for data, a map of allowed functions for behaviour, or a proper expression parser."
+    },
+    {
+      "id": "SEC-009",
+      "severity": "medium",
+      "dimension": "security",
+      "title": "Route handler with no visible auth check",
+      "file": "app/api/chat/route.ts",
+      "line": 7,
+      "evidence": "export async function POST",
+      "fix": "Check authentication before doing anything sensitive, in the handler, in middleware.ts, or in a Fastify preHandler hook. Example (Next.js): const session = await getServerSession(authOptions); if (!session) return Response.json({ error: \"Unauthorized\" }, { status: 401 });"
+    },
+    {
+      "id": "SEC-010",
+      "severity": "medium",
+      "dimension": "api-design",
+      "title": "Route handler with no visible input validation",
+      "file": "app/api/chat/route.ts",
+      "line": 7,
+      "evidence": "export async function POST",
+      "fix": "Validate input before using it. With Zod: const body = schema.parse(await req.json()); with Fastify: add a schema option to the route. Return 400 with a consistent error shape on invalid input."
+    },
+    {
+      "id": "SEC-009",
+      "severity": "medium",
+      "dimension": "security",
+      "title": "Route handler with no visible auth check",
+      "file": "app/api/users/route.ts",
+      "line": 4,
+      "evidence": "export async function POST",
+      "fix": "Check authentication before doing anything sensitive, in the handler, in middleware.ts, or in a Fastify preHandler hook. Example (Next.js): const session = await getServerSession(authOptions); if (!session) return Response.json({ error: \"Unauthorized\" }, { status: 401 });"
+    },
+    {
+      "id": "SEC-010",
+      "severity": "medium",
+      "dimension": "api-design",
+      "title": "Route handler with no visible input validation",
+      "file": "app/api/users/route.ts",
+      "line": 4,
+      "evidence": "export async function POST",
+      "fix": "Validate input before using it. With Zod: const body = schema.parse(await req.json()); with Fastify: add a schema option to the route. Return 400 with a consistent error shape on invalid input."
+    },
+    {
+      "id": "SEC-007",
+      "severity": "medium",
+      "dimension": "security",
+      "title": "CORS allows any origin with credentials",
+      "file": "server.js",
+      "line": 10,
+      "evidence": "origin: '*'",
+      "fix": "Restrict CORS to your own origins: origin: [\"https://app.example.com\"]. Never use origin: \"*\" together with credentials: true."
+    },
+    {
+      "id": "SEC-008",
+      "severity": "medium",
+      "dimension": "api-design",
+      "title": "Fastify route without schema validation",
+      "file": "server.js",
+      "line": 12,
+      "evidence": "fastify.post('/login', async (req, reply) => {   const { email, password } = req.body;   c",
+      "fix": "Add a schema option to the route: fastify.post(\"/users\", { schema: { body: { type: \"object\", required: [\"email\"], properties: { email: { type: \"string\", format: \"email\" } } } } }, handler)"
+    },
+    {
+      "id": "SEC-009",
+      "severity": "medium",
+      "dimension": "security",
+      "title": "Route handler with no visible auth check",
+      "file": "server.js",
+      "line": 12,
+      "evidence": ".post(",
+      "fix": "Check authentication before doing anything sensitive, in the handler, in middleware.ts, or in a Fastify preHandler hook. Example (Next.js): const session = await getServerSession(authOptions); if (!session) return Response.json({ error: \"Unauthorized\" }, { status: 401 });"
+    },
+    {
+      "id": "SEC-006",
+      "severity": "medium",
+      "dimension": "security",
+      "title": "JWT signed or verified with a hardcoded secret",
+      "file": "server.js",
+      "line": 14,
+      "evidence": "jwt.sign({ email }, 'secret123'",
+      "fix": "Read the JWT secret from the environment: jwt.sign(payload, process.env.JWT_SECRET). Use a long random secret (32+ characters) and rotate it if it was ever committed."
+    },
+    {
+      "id": "SEC-008",
+      "severity": "medium",
+      "dimension": "api-design",
+      "title": "Fastify route without schema validation",
+      "file": "server.js",
+      "line": 18,
+      "evidence": "fastify.get('/users/:id', async (req, reply) => {   const query = 'SELECT * FROM users WHE",
+      "fix": "Add a schema option to the route: fastify.post(\"/users\", { schema: { body: { type: \"object\", required: [\"email\"], properties: { email: { type: \"string\", format: \"email\" } } } } }, handler)"
+    },
+    {
+      "id": "SEC-008",
+      "severity": "medium",
+      "dimension": "api-design",
+      "title": "Fastify route without schema validation",
+      "file": "server.js",
+      "line": 24,
+      "evidence": "fastify.get('/users', async (req, reply) => {   const ids = [1, 2, 3];   const users = [];",
+      "fix": "Add a schema option to the route: fastify.post(\"/users\", { schema: { body: { type: \"object\", required: [\"email\"], properties: { email: { type: \"string\", format: \"email\" } } } } }, handler)"
+    },
+    {
+      "id": "PERF-002",
+      "severity": "medium",
+      "dimension": "performance",
+      "title": "await inside a loop (likely N+1 queries)",
+      "file": "server.js",
+      "line": 27,
+      "evidence": "for (const id of ids) { const user = await",
+      "fix": "Fetch all rows in one query (e.g. WHERE id IN (...)) or run the calls in parallel with Promise.all instead of awaiting one by one inside the loop."
+    },
+    {
+      "id": "SEC-008",
+      "severity": "medium",
+      "dimension": "api-design",
+      "title": "Fastify route without schema validation",
+      "file": "server.js",
+      "line": 34,
+      "evidence": "fastify.post('/run', async (req, reply) => {   const result = eval(req.body.code);   retur",
+      "fix": "Add a schema option to the route: fastify.post(\"/users\", { schema: { body: { type: \"object\", required: [\"email\"], properties: { email: { type: \"string\", format: \"email\" } } } } }, handler)"
+    },
+    {
+      "id": "PERF-001",
+      "severity": "low",
+      "dimension": "performance",
+      "title": "Raw <img> tag instead of next/image",
+      "file": "app/page.tsx",
+      "line": 14,
+      "evidence": "<img src=\"/hero.jpg\" alt=\"Hero\" />",
+      "fix": "Use next/image for automatic optimisation: import Image from \"next/image\"; <Image src={...} alt=\"...\" width={800} height={600} />"
+    },
+    {
+      "id": "PERF-003",
+      "severity": "low",
+      "dimension": "performance",
+      "title": "Fastify server without compression",
+      "file": "server.js",
+      "line": 7,
+      "evidence": "Fastify instance created without @fastify/compress",
+      "fix": "Register compression: await fastify.register(import(\"@fastify/compress\"));"
+    },
+    {
+      "id": "API-001",
+      "severity": "low",
+      "dimension": "api-design",
+      "title": "Error response may leak internals",
+      "file": "server.js",
+      "line": 40,
+      "evidence": "reply.status(500).send({ error: error",
+      "fix": "Return a generic error message to the client and log the details server-side. Example: return Response.json({ error: \"Internal server error\" }, { status: 500 });"
+    }
+  ]
+}
